@@ -1,22 +1,3 @@
-"""
-Enhanced Chess Game with Complete Features
------------------------------------------
-Features:
-- En passant capture
-- Castling (kingside and queenside)
-- Check and checkmate detection
-- Move animations
-- Sound effects
-- AI with adjustable difficulty
-- Player vs Player or Player vs Computer
-
-Requirements:
-  pip install pygame
-
-Place piece images in ./images folder:
-wp.png, wr.png, wn.png, wb.png, wq.png, wk.png
-bp.png, br.png, bn.png, bb.png, bq.png, bk.png
-"""
 
 import pygame
 import sys

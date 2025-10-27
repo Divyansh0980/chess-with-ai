@@ -3,13 +3,11 @@ import pygame
 import sys
 import copy
 
-# Constants
 SQ_SIZE = 80
 BOARD_SIZE = SQ_SIZE * 8
 FPS = 60
-ANIMATION_SPEED = 10  # pixels per frame
+ANIMATION_SPEED = 10  
 
-# Colors
 WHITE = (240, 217, 181)
 BROWN = (181, 136, 99)
 HIGHLIGHT = (50, 205, 50, 120)
@@ -75,7 +73,6 @@ def find_king(board, white):
 
 def is_attacked(board, r, c, by_white):
     """Check if square (r,c) is attacked by pieces of color by_white"""
-    # Check pawn attacks
     pawn_dir = 1 if by_white else -1
     pawn = 'P' if by_white else 'p'
     for dc in [-1, 1]:
@@ -83,14 +80,12 @@ def is_attacked(board, r, c, by_white):
         if in_bounds(pr, pc) and board[pr][pc] == pawn:
             return True
     
-    # Check knight attacks
     knight = 'N' if by_white else 'n'
     for dr, dc in [(2,1),(2,-1),(-2,1),(-2,-1),(1,2),(1,-2),(-1,2),(-1,-2)]:
         nr, nc = r + dr, c + dc
         if in_bounds(nr, nc) and board[nr][nc] == knight:
             return True
     
-    # Check king attacks
     king = 'K' if by_white else 'k'
     for dr in [-1, 0, 1]:
         for dc in [-1, 0, 1]:
@@ -100,11 +95,9 @@ def is_attacked(board, r, c, by_white):
             if in_bounds(kr, kc) and board[kr][kc] == king:
                 return True
     
-    # Check sliding pieces (rook, bishop, queen)
     rook_queen = ['R', 'Q'] if by_white else ['r', 'q']
     bishop_queen = ['B', 'Q'] if by_white else ['b', 'q']
     
-    # Rook/Queen directions
     for dr, dc in [(1,0),(-1,0),(0,1),(0,-1)]:
         nr, nc = r + dr, c + dc
         while in_bounds(nr, nc):
@@ -115,7 +108,6 @@ def is_attacked(board, r, c, by_white):
             nr += dr
             nc += dc
     
-    # Bishop/Queen directions
     for dr, dc in [(1,1),(1,-1),(-1,1),(-1,-1)]:
         nr, nc = r + dr, c + dc
         while in_bounds(nr, nc):
@@ -149,14 +141,10 @@ def get_pseudo_legal_moves(state, r, c):
         direction = -1 if color_white else 1
         start_row = 6 if color_white else 1
         
-        # Forward move
         if in_bounds(r + direction, c) and board[r + direction][c] == '.':
             moves.append((r + direction, c))
-            # Double move from start
             if r == start_row and board[r + 2*direction][c] == '.':
                 moves.append((r + 2*direction, c))
-        
-        # Captures
         for dc in [-1, 1]:
             nr, nc = r + direction, c + dc
             if in_bounds(nr, nc):
@@ -164,7 +152,6 @@ def get_pseudo_legal_moves(state, r, c):
                 if target != '.' and (target.isupper() != color_white):
                     moves.append((nr, nc))
         
-        # En passant
         if state.en_passant_target:
             ep_r, ep_c = state.en_passant_target
             if r + direction == ep_r and abs(c - ep_c) == 1:
@@ -213,18 +200,15 @@ def get_pseudo_legal_moves(state, r, c):
                     if target == '.' or target.isupper() != color_white:
                         moves.append((nr, nc))
         
-        # Castling
         if not is_in_check(board, color_white):
             row = 7 if color_white else 0
             if r == row and c == 4:
-                # Kingside
                 if state.castling_rights['K' if color_white else 'k']:
                     if (board[row][5] == '.' and board[row][6] == '.' and
                         not is_attacked(board, row, 5, not color_white) and
                         not is_attacked(board, row, 6, not color_white)):
                         moves.append((row, 6))
                 
-                # Queenside
                 if state.castling_rights['Q' if color_white else 'q']:
                     if (board[row][3] == '.' and board[row][2] == '.' and board[row][1] == '.' and
                         not is_attacked(board, row, 3, not color_white) and
@@ -256,19 +240,15 @@ def make_move(state, from_pos, to_pos, validate=True):
     board = new_state.board
     piece = board[r1][c1]
     
-    # Handle en passant capture
     is_en_passant = False
     if piece.lower() == 'p' and state.en_passant_target == (r2, c2):
         is_en_passant = True
-        # Remove captured pawn
         capture_row = r1
         board[capture_row][c2] = '.'
     
-    # Handle castling
     is_castling = False
     if piece.lower() == 'k' and abs(c2 - c1) == 2:
         is_castling = True
-        # Move rook
         if c2 == 6:  # Kingside
             board[r1][5] = board[r1][7]
             board[r1][7] = '.'
@@ -276,22 +256,17 @@ def make_move(state, from_pos, to_pos, validate=True):
             board[r1][3] = board[r1][0]
             board[r1][0] = '.'
     
-    # Make the move
     board[r2][c2] = piece
     board[r1][c1] = '.'
     
-    # Pawn promotion
     if piece == 'P' and r2 == 0:
         board[r2][c2] = 'Q'
     elif piece == 'p' and r2 == 7:
         board[r2][c2] = 'q'
-    
-    # Update en passant target
     new_state.en_passant_target = None
     if piece.lower() == 'p' and abs(r2 - r1) == 2:
         new_state.en_passant_target = ((r1 + r2) // 2, c1)
     
-    # Update castling rights
     if piece == 'K':
         new_state.castling_rights['K'] = False
         new_state.castling_rights['Q'] = False
@@ -400,7 +375,6 @@ def load_images():
             img = pygame.image.load('images/' + filename).convert_alpha()
             imgs[code] = pygame.transform.smoothscale(img, (SQ_SIZE, SQ_SIZE))
         except:
-            # Create placeholder if image not found
             surf = pygame.Surface((SQ_SIZE, SQ_SIZE))
             surf.fill((150, 150, 150))
             imgs[code] = surf
@@ -498,15 +472,12 @@ def main():
     font = pygame.font.SysFont(None, 36)
     small_font = pygame.font.SysFont(None, 24)
 
-    # Get game settings
     mode, difficulty, side = menu(screen, font)
     ai_depth = {"Easy": 1, "Medium": 2, "Hard": 3}[difficulty]
     
-    # Initialize sounds
     move_sound = create_sound(440, 50)
     capture_sound = create_sound(330, 80)
     
-    # Game state
     state = GameState()
     imgs = load_images()
     selected = None
@@ -514,7 +485,6 @@ def main():
     user_is_white = (side == "White")
     vs_ai = (mode == "Player vs Computer")
     
-    # Animation state
     animating = False
     anim_piece = None
     anim_from = None
@@ -528,20 +498,17 @@ def main():
     while running:
         clock.tick(FPS)
         
-        # Handle animation
         if animating:
             anim_progress += ANIMATION_SPEED
             if anim_progress >= SQ_SIZE:
                 animating = False
                 anim_piece = None
         
-        # AI move
         if not game_over and vs_ai and state.white_turn != user_is_white and not animating:
             _, move = minimax(state, ai_depth, -99999, 99999, state.white_turn)
             if move:
                 from_pos, to_pos = move
                 
-                # Check for capture
                 if state.board[to_pos[0]][to_pos[1]] != '.':
                     if capture_sound:
                         capture_sound.play()
@@ -549,7 +516,6 @@ def main():
                     if move_sound:
                         move_sound.play()
                 
-                # Setup animation
                 animating = True
                 anim_from = from_pos
                 anim_to = to_pos
@@ -558,7 +524,6 @@ def main():
                 
                 state = make_move(state, from_pos, to_pos)
                 
-                # Check game over
                 if is_checkmate(state):
                     game_over = True
                     result_text = "White wins!" if not state.white_turn else "Black wins!"
@@ -566,7 +531,6 @@ def main():
                     game_over = True
                     result_text = "Stalemate!"
         
-        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -585,16 +549,13 @@ def main():
                 
                 piece = state.board[r][c]
                 
-                # Select piece
                 if piece != '.' and is_white(piece) == state.white_turn:
                     selected = (r, c)
                     valid_moves = get_legal_moves(state, r, c)
-                # Make move
                 elif selected and (r, c) in valid_moves:
                     from_pos = selected
                     to_pos = (r, c)
                     
-                    # Check for capture
                     if state.board[to_pos[0]][to_pos[1]] != '.':
                         if capture_sound:
                             capture_sound.play()
@@ -602,7 +563,6 @@ def main():
                         if move_sound:
                             move_sound.play()
                     
-                    # Setup animation
                     animating = True
                     anim_from = from_pos
                     anim_to = to_pos
@@ -613,7 +573,6 @@ def main():
                     selected = None
                     valid_moves = []
                     
-                    # Check game over
                     if is_checkmate(state):
                         game_over = True
                         result_text = "White wins!" if not state.white_turn else "Black wins!"
@@ -624,27 +583,21 @@ def main():
                     selected = None
                     valid_moves = []
         
-        # Drawing
         draw_board(screen)
         
-        # Highlight last move
         if state.last_move and not animating:
             highlight_squares(screen, [state.last_move[0], state.last_move[1]], MOVE_HIGHLIGHT)
         
-        # Highlight selected square and valid moves
         if selected and not animating:
             highlight_squares(screen, [selected] + valid_moves)
         
-        # Highlight king in check
         if is_in_check(state.board, state.white_turn):
             king_pos = find_king(state.board, state.white_turn)
             if king_pos:
                 highlight_squares(screen, [king_pos], CHECK_HIGHLIGHT)
         
-        # Draw pieces
         draw_pieces(screen, state.board, imgs, {'from': anim_from} if animating else None)
         
-        # Draw animating piece
         if animating and anim_piece and anim_from and anim_to:
             from_x, from_y = anim_from[1] * SQ_SIZE, anim_from[0] * SQ_SIZE
             to_x, to_y = anim_to[1] * SQ_SIZE, anim_to[0] * SQ_SIZE
@@ -653,7 +606,6 @@ def main():
             current_y = from_y + (to_y - from_y) * progress_ratio
             screen.blit(imgs[anim_piece], (current_x, current_y))
         
-        # Draw game status
         status = "White" if state.white_turn else "Black"
         if is_in_check(state.board, state.white_turn):
             status += " - CHECK!"
@@ -664,7 +616,6 @@ def main():
         screen.blit(status_bg, (10, 10))
         screen.blit(status_text, (20, 15))
         
-        # Draw game over message
         if game_over:
             result_surface = font.render(result_text, True, (255, 255, 255))
             bg = pygame.Surface((result_surface.get_width() + 40, result_surface.get_height() + 20))

@@ -164,15 +164,11 @@ This project is open source and available under the [MIT License](LICENSE).
 
 **Divyansh** - [GitHub Profile](https://github.com/Divyansh0980)
 
-## Acknowledgments
 
-- Chess piece images can be downloaded from various sources like [Wikimedia Commons](https://commons.wikimedia.org/)
-- Inspired by classic chess games and the Python community
 
-## Contact
 
-For questions or suggestions, please open an issue on GitHub.
 
 ---
 
 ⭐ Star this repository if you found it helpful!
+

@@ -5,7 +5,7 @@ import copy
 SQ_SIZE = 80
 BOARD_SIZE = SQ_SIZE * 8
 FPS = 60
-ANIMATION_SPEED = 10  
+ANIMATION_SPEED = 10
 
 WHITE = (240, 217, 181)
 BROWN = (181, 136, 99)
@@ -34,7 +34,7 @@ class GameState:
     def __init__(self):
         self.board = [row[:] for row in STARTING_BOARD]
         self.white_turn = True
-        self.en_passant_target = None  # (row, col) of target square
+        self.en_passant_target = None
         self.castling_rights = {'K': True, 'Q': True, 'k': True, 'q': True}
         self.king_moved = {'white': False, 'black': False}
         self.rook_moved = {'white': {'kingside': False, 'queenside': False},
@@ -71,7 +71,6 @@ def find_king(board, white):
     return None
 
 def is_attacked(board, r, c, by_white):
-    """Check if square (r,c) is attacked by pieces of color by_white"""
     pawn_dir = 1 if by_white else -1
     pawn = 'P' if by_white else 'p'
     for dc in [-1, 1]:
@@ -126,7 +125,6 @@ def is_in_check(board, white):
     return is_attacked(board, king_pos[0], king_pos[1], not white)
 
 def get_pseudo_legal_moves(state, r, c):
-    """Get moves without checking if they leave king in check"""
     board = state.board
     piece = board[r][c]
     if piece == '.':
@@ -135,7 +133,7 @@ def get_pseudo_legal_moves(state, r, c):
     moves = []
     color_white = piece.isupper()
     p = piece.lower()
-
+    
     if p == 'p':
         direction = -1 if color_white else 1
         start_row = 6 if color_white else 1
@@ -144,6 +142,7 @@ def get_pseudo_legal_moves(state, r, c):
             moves.append((r + direction, c))
             if r == start_row and board[r + 2*direction][c] == '.':
                 moves.append((r + 2*direction, c))
+        
         for dc in [-1, 1]:
             nr, nc = r + direction, c + dc
             if in_bounds(nr, nc):
@@ -166,7 +165,7 @@ def get_pseudo_legal_moves(state, r, c):
                 if target == '.' or target.isupper() != color_white:
                     moves.append((nr, nc))
         return moves
-
+    
     if p in ('b', 'r', 'q'):
         directions = []
         if p in ('r', 'q'):
@@ -186,8 +185,9 @@ def get_pseudo_legal_moves(state, r, c):
                     break
                 nr += dr
                 nc += dc
+        
         return moves
-
+    
     if p == 'k':
         for dr in [-1, 0, 1]:
             for dc in [-1, 0, 1]:
@@ -215,11 +215,10 @@ def get_pseudo_legal_moves(state, r, c):
                         moves.append((row, 2))
         
         return moves
-
+    
     return moves
 
 def get_legal_moves(state, r, c):
-    """Get legal moves that don't leave king in check"""
     pseudo_moves = get_pseudo_legal_moves(state, r, c)
     legal_moves = []
     
@@ -231,7 +230,6 @@ def get_legal_moves(state, r, c):
     return legal_moves
 
 def make_move(state, from_pos, to_pos, validate=True):
-    """Make a move and return new state"""
     r1, c1 = from_pos
     r2, c2 = to_pos
     
@@ -248,10 +246,10 @@ def make_move(state, from_pos, to_pos, validate=True):
     is_castling = False
     if piece.lower() == 'k' and abs(c2 - c1) == 2:
         is_castling = True
-        if c2 == 6:  # Kingside
+        if c2 == 6:
             board[r1][5] = board[r1][7]
             board[r1][7] = '.'
-        else:  # Queenside
+        else:
             board[r1][3] = board[r1][0]
             board[r1][0] = '.'
     
@@ -262,6 +260,7 @@ def make_move(state, from_pos, to_pos, validate=True):
         board[r2][c2] = 'Q'
     elif piece == 'p' and r2 == 7:
         board[r2][c2] = 'q'
+    
     new_state.en_passant_target = None
     if piece.lower() == 'p' and abs(r2 - r1) == 2:
         new_state.en_passant_target = ((r1 + r2) // 2, c1)
@@ -289,7 +288,6 @@ def make_move(state, from_pos, to_pos, validate=True):
     return new_state
 
 def all_legal_moves(state):
-    """Get all legal moves for current player"""
     moves = []
     for r in range(8):
         for c in range(8):
@@ -300,19 +298,16 @@ def all_legal_moves(state):
     return moves
 
 def is_checkmate(state):
-    """Check if current player is in checkmate"""
     if not is_in_check(state.board, state.white_turn):
         return False
     return len(all_legal_moves(state)) == 0
 
 def is_stalemate(state):
-    """Check if current player is in stalemate"""
     if is_in_check(state.board, state.white_turn):
         return False
     return len(all_legal_moves(state)) == 0
 
 def eval_board(state):
-    """Evaluate board position"""
     piece_values = {'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0}
     
     if is_checkmate(state):
@@ -331,7 +326,6 @@ def eval_board(state):
     return val
 
 def minimax(state, depth, alpha, beta, maximizing):
-    """Minimax with alpha-beta pruning"""
     if depth == 0 or is_checkmate(state) or is_stalemate(state):
         return eval_board(state), None
     
@@ -367,7 +361,6 @@ def minimax(state, depth, alpha, beta, maximizing):
         return min_eval, best_move
 
 def load_images():
-    """Load piece images"""
     imgs = {}
     for code, filename in PIECE_TO_IMG.items():
         try:
@@ -380,7 +373,6 @@ def load_images():
     return imgs
 
 def create_sound(freq, duration=100):
-    """Create simple sound effect"""
     try:
         sample_rate = 22050
         frames = int(duration * sample_rate / 1000)
@@ -394,14 +386,12 @@ def create_sound(freq, duration=100):
         return None
 
 def draw_board(screen):
-    """Draw chess board"""
     for r in range(8):
         for c in range(8):
             color = WHITE if (r + c) % 2 == 0 else BROWN
             pygame.draw.rect(screen, color, (c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 def draw_pieces(screen, board, imgs, animating_piece=None):
-    """Draw pieces on board"""
     for r in range(8):
         for c in range(8):
             if animating_piece and animating_piece['from'] == (r, c):
@@ -411,18 +401,15 @@ def draw_pieces(screen, board, imgs, animating_piece=None):
                 screen.blit(imgs[piece], (c*SQ_SIZE, r*SQ_SIZE))
 
 def highlight_squares(screen, squares, color=HIGHLIGHT):
-    """Highlight squares"""
     surf = pygame.Surface((SQ_SIZE, SQ_SIZE), pygame.SRCALPHA)
     surf.fill(color)
     for r, c in squares:
         screen.blit(surf, (c*SQ_SIZE, r*SQ_SIZE))
 
 def coords_to_square(pos):
-    """Convert pixel coordinates to board square"""
     return pos[1] // SQ_SIZE, pos[0] // SQ_SIZE
 
 def menu(screen, font):
-    """Display game menu"""
     modes = ["Player vs Player", "Player vs Computer"]
     levels = ["Easy", "Medium", "Hard"]
     sides = ["White", "Black"]
@@ -493,9 +480,12 @@ def main():
     game_over = False
     result_text = ""
     
+    fps_font = pygame.font.SysFont(None, 20)
+    
     running = True
     while running:
         clock.tick(FPS)
+        current_fps = clock.get_fps()
         
         if animating:
             anim_progress += ANIMATION_SPEED
@@ -614,6 +604,13 @@ def main():
         status_bg.set_alpha(180)
         screen.blit(status_bg, (10, 10))
         screen.blit(status_text, (20, 15))
+        
+        fps_text = fps_font.render(f"FPS: {int(current_fps)}", True, (255, 255, 255))
+        fps_bg = pygame.Surface((fps_text.get_width() + 20, fps_text.get_height() + 10))
+        fps_bg.fill((0, 0, 0))
+        fps_bg.set_alpha(180)
+        screen.blit(fps_bg, (BOARD_SIZE - fps_bg.get_width() - 10, 10))
+        screen.blit(fps_text, (BOARD_SIZE - fps_bg.get_width(), 15))
         
         if game_over:
             result_surface = font.render(result_text, True, (255, 255, 255))
